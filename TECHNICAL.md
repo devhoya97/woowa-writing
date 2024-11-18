@@ -19,14 +19,16 @@
 ```
 지난 미션 중에 토스의 API를 활용하는 부분이 있었죠. 위 그림과 같이 테스트 환경을 구성하면, 외부 API 테스트가 가능할까요?
 ```
+
 이미지의 상황을 이해해보겠습니다. prod 환경에서 `RestClient`는 토스 서버를 바라보고 있습니다. 클라이언트-서버 구조에서 우리의 서버는 클라이언트이고, 토스가 서버입니다. 우리는 `RestClient`가 토스 서버와 요청과 응답을 잘 주고받는지 테스트하고 싶습니다. 하지만 테스트 코드에서 실제로 토스 서버에게 요청을 보내도록 만들면, 우리 서버에 대한 테스트 코드인데 토스 서버의 안정성에 의존해야 한다는 문제가 있습니다. 따라서 `application.yml`을 적절히 설정하여 test 환경에서는 `RestClient`가 localhost를 바라보도록 만듭니다. 그리고 `FakeTossController`라는 테스트용 컨트롤러를 만들어서, `RestClient`가 localhost로 보내는 요청을 처리할 수 있도록 구성합니다. 자, 이제 테스트가 가능할까요?
 
 </p>
 <p>
 
+
 여기저기 헛다리를 짚는 크루들을 보고 제이슨이 힌트를 줬습니다. 
 ```
-`@SpringBootTest`의 기본 설정은 무엇인가요?
+`@SpringBootTest`의 기본 설정은 무엇인가요?                       
 ```
 어떤 크루가 대답했습니다.
 ```
@@ -36,13 +38,16 @@ MOCK 입니다!
 ```
 그럼 서블릿 컨테이너가 뜰까요?
 ```
+
 아! 저는 이 때 서블릿 컨테이너가 무엇인지 몰랐습니다. 그래서 자연스럽게 뒤따라오는 내용은 이해하지도 못했고, 기억도 안 납니다. 분명 이전 과제에서 토스 API를 포함하는 로직에 대해 테스트 코드를 작성한 경험이 있는데, 시간이 부족하다는 핑계로 여기저기 블로그에서 돌아다니는 코드와 ChatGPT가 알려준 코드를 조합해서 제출했던 것으로 기억합니다. 
 
 이에 경각심을 느껴 다시 공부해보고자 합니다. 저와 함께 외부 API 테스트를 고민해보면서, 자연스럽게 서버가 요청을 처리하는 과정까지 이해해보시죠!
 
+
 </p>
 
 ***
+
 ### `@SpringBootTest`의 webEnvironment
 <p>
 
@@ -155,6 +160,7 @@ public record TodoResponse(long userId, long id, String title, boolean completed
 </p>
 
 ***
+
 ### `@SpringBootTest`에서 테스트용 내장 서버를 활용하기
 <p>
 
@@ -188,11 +194,13 @@ public class TodoClientTest {
 
 ```
 위 테스트 코드를 통과시키기 위해선 두 가지의 추가 설정이 필요합니다.
+
 1. test 패키지의 `application.yml`에 아래와 같이 적어줍니다.
 ```
 base-url: http://localhost:8080
 ```
 위와 같은 설정이 필요한 이유는 무엇일까요? 앞서 함께 봤던 `TodoClient`의 생성자를 다시 봅시다.
+
 ```java
 @Component
 public class TodoClient {
@@ -226,6 +234,7 @@ public class TodoClient {
 `TodoClient`를 빈으로 등록할 때, baseUrl은 `application.yml`에 정의된 값이 주입됩니다. 스프링부트는 스프링컨테이너를 구성할 때, main의 `application.yml`과 test의 `application.yml`을 구분해서 사용합니다. 따라서 테스트용 스프링컨테이너에 `TodoClient`를 빈으로 등록할 때는 baseUrl이 실제 외부 서버의 URL을 바라보지 않고 localhost:8080을 바라보도록 설정할 수 있습니다. 덕분에 `TodoClient`는 테스트용 내장 서버를 바라보고 요청을 보낼 수 있게 되었습니다. 예를 들어 `todoClient.getTodoById(1)`을 호출하면 `GET http://localhost:8080/todos/1`이라는 Http 요청이 전송될 것입니다. 그러나 아직까지 우리의 테스트용 내장 서버는 위 요청을 처리할 컨트롤러가 없습니다. 다음 과정으로 넘어가봅시다.
 
 2. `FakeTodoController`를 만들어서 빈으로 등록합니다.
+
 ```java
 @RestController
 @RequestMapping("/todos")
